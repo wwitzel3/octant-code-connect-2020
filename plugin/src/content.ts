@@ -135,7 +135,7 @@ export function notFoundHandler(this: any, param: any): octant.ContentResponse {
 function checkIfInstalled(
   client: octant.DashboardClient,
   result: any
-): TextFactory|LinkFactory {
+): TextFactory | LinkFactory {
   try {
     const deployments = client.List({
       apiVersion: "apps/v1",

@@ -22,9 +22,13 @@ import { FlexLayoutFactory } from "@project-octant/plugin/components/flexlayout"
 import { SummaryFactory } from "@project-octant/plugin/components/summary";
 
 import { router } from "./routes";
+import { V1ObjectMeta } from "@kubernetes/client-node";
+import { LinkFactory } from "@project-octant/plugin/components/link";
 
 // This plugin will handle v1/Pod types.
-let podGVK = { version: "v1", kind: "Pod" };
+const podGVK = { version: "v1", kind: "Pod" };
+const deploymentGVK = { group: "apps", version: "v1", kind: "Deployment" };
+const serviceGVK = { version: "v1", kind: "Service" };
 
 const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
   implements octant.Plugin {
@@ -41,8 +45,7 @@ const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
 
   // Plugin capabilities
   capabilities = {
-    supportPrinterConfig: [podGVK],
-    supportTab: [podGVK],
+    supportPrinterConfig: [serviceGVK, podGVK, deploymentGVK],
     actionNames: [
       "action.octant.dev/setNamespace",
       "action.codeconnect2020.dev/installDeployment",
@@ -64,31 +67,25 @@ const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
   }
 
   printHandler(request: octant.ObjectRequest): octant.PrintResponse {
-    const myText = new TextFactory({
-      value: "my **bold** and *emphisized* test",
-      options: { isMarkdown: true },
-    }).toComponent();
-
-    const config = new SummaryFactory({
-      sections: [{ header: "plugin-foo-config", content: myText }],
-    });
-
-    const status = new SummaryFactory({
-      sections: [{ header: "plugin-foo-status", content: myText }],
-    });
-
-    let cardA = new CardFactory({
-      body: new TextFactory({
-        value: "Extra information about this resource.",
-      }).toComponent(),
-      factoryMetadata: {
-        title: [new TextFactory({ value: "Extra Information" }).toComponent()],
-      },
-    });
-
-    let items = [{ width: h.Width.Half, view: cardA }];
-
-    return h.createPrintResponse(config, status, items);
+    const metadata = request.object.metadata as V1ObjectMeta;
+    if (metadata.labels) {
+      console.log(JSON.stringify(metadata.labels));
+      if (metadata.labels["managed-by"] === "code-2020-plugin") {
+        const config = new SummaryFactory({
+          sections: [
+            {
+              header: "Managed By",
+              content: new LinkFactory({
+                value: "code-connect-2020",
+                ref: `/code-connect-2020/deployments/${metadata.labels["app"]}`,
+              }).toComponent(),
+            },
+          ],
+        });
+        return h.createPrintResponse(config);
+      }
+    }
+    return h.createPrintResponse();
   }
 
   actionHandler(request: octant.ActionRequest): octant.ActionResponse | void {
