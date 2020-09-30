@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: httpbin
+    managed-by: code-2020-plugin
+  name: httpbin
+spec:
+  selector:
+    matchLabels:
+      app: httpbin
+      managed-by: code-2020-plugin
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: httpbin
+        managed-by: code-2020-plugin
+    spec:
+      containers:
+      - args:
+        - -b
+        - 0.0.0.0:8080
+        - httpbin:app
+        command:
+        - gunicorn
+        image: docker.io/kennethreitz/httpbin
+        imagePullPolicy: Always
+        name: httpbin
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: httpbin
+    managed-by: code-2020-plugin
+  name: httpbin
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: httpbin
+    managed-by: code-2020-plugin
+  sessionAffinity: None
+  type: ClusterIP

@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: simpleapp
+    managed-by: code-2020-plugin
+  name: simpleapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simpleapp
+      managed-by: code-2020-plugin
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: simpleapp
+        managed-by: code-2020-plugin
+    spec:
+      containers:
+      - image: gcr.io/google-samples/kubernetes-bootcamp:v1
+        name: kubernetes-bootcamp
+        resources: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: simpleapp
+    managed-by: code-2020-plugin
+  name: simpleapp
+  namespace: code-2020-demo
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: simpleapp
+    managed-by: code-2020-plugin
+  sessionAffinity: None
+  type: ClusterIP
