@@ -24,8 +24,7 @@ app.get("/deployments", async (req, res) => {
 
 app.get("/deployments/:name", async (req, res) => {
   const name = req.params.name;
-
-  let details = deployments[name];
+  const details = deployments.find(d => d.name === name);
   try {
     fs.readFile("./" + details["filename"], "utf8", function (err, data) {
       if (err) {
