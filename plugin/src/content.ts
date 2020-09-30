@@ -107,7 +107,7 @@ export function listHandler(this: any, params: any): octant.ContentResponse {
           }),
           Title: new TextFactory({ value: deployment.title }),
           Filename: new TextFactory({ value: deployment.filename }),
-        Deployment: new TextFactory({ value: "Not installed." }),
+          Deployment: checkIfInstalled(this.dashboardClient, deployment),
         },
         { gridActions: deploymentGridActions(deployment) }
       );
@@ -130,6 +130,32 @@ export function notFoundHandler(this: any, param: any): octant.ContentResponse {
   ];
   const text = new TextFactory({ value: "Not Found." });
   return h.createContentResponse(title, [text]);
+}
+
+function checkIfInstalled(
+  client: octant.DashboardClient,
+  result: any
+): TextFactory|LinkFactory {
+  try {
+    const deployments = client.List({
+      apiVersion: "apps/v1",
+      kind: "Deployment",
+      namespace: "code-2020-demo",
+      labelSelector: {
+        matchLabels: { app: result.name, "managed-by": "code-2020-plugin" },
+      },
+    });
+    if (deployments.length > 0) {
+      const ref = h.refFromObject(deployments[0]);
+      const path = client.RefPath(ref);
+      return new LinkFactory({ value: ref.name, ref: path });
+    } else {
+      return new TextFactory({ value: "Not installed." });
+    }
+  } catch (e) {
+    console.log(e);
+    return new TextFactory({ value: "Error Getting Status" });
+  }
 }
 
 function deploymentGridActions(obj: any): GridActionsFactory {
