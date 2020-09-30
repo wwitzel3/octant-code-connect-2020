@@ -19,17 +19,20 @@ const DEPLOYMENT_COLUMNS = ["Name", "Title", "Filename", "Deployment"];
 export function getHandler(this: any, params: any): octant.ContentResponse {
   const name: string = params.deploymentName;
   const title = [
-    new TextFactory({ value: "Code Connect 2020" }),
-    new TextFactory({ value: "Deployments" }),
+    new LinkFactory({ value: "Code Connect 2020", ref: PREFIX }),
+    new LinkFactory({ value: "Deployments", ref: PREFIX + "/deployments" }),
     new TextFactory({ value: name }),
   ];
 
   const httpClient = this.httpClient as octant.HTTPClient;
   let deployment: any;
 
-  httpClient.getJSON(`http://localhost:4200/deployments/${name}`, (result: any) => {
-    deployment = result;
-  });
+  httpClient.getJSON(
+    `http://localhost:4200/deployments/${name}`,
+    (result: any) => {
+      deployment = result;
+    }
+  );
 
   let entityDetails = new CardFactory({
     body: new TextFactory({
@@ -61,7 +64,9 @@ export function getHandler(this: any, params: any): octant.ContentResponse {
         ],
       ],
     },
-    factoryMetadata: { title: title.map((cf) => cf.toComponent()) },
+    factoryMetadata: {
+      title: [new TextFactory({ value: "Details" }).toComponent()],
+    },
   });
 
   const editor = new EditorFactory({
@@ -93,7 +98,7 @@ export function listHandler(this: any, params: any): octant.ContentResponse {
 
   httpClient.getJSON("http://localhost:4200/deployments", (results: any) => {
     results.forEach((deployment: any) => {
-      const row = {
+      const row = new h.TableRow({
         Name: new LinkFactory({
           value: deployment.name,
           ref: `${PREFIX}/deployments/${deployment.name}`,
@@ -101,7 +106,7 @@ export function listHandler(this: any, params: any): octant.ContentResponse {
         Title: new TextFactory({ value: deployment.title }),
         Filename: new TextFactory({ value: deployment.filename }),
         Deployment: new TextFactory({ value: "Not installed" }),
-      } as h.TableRow;
+      });
       table.push(row);
     });
   });
