@@ -109,7 +109,7 @@ export function listHandler(this: any, params: any): octant.ContentResponse {
           Filename: new TextFactory({ value: deployment.filename }),
           Deployment: checkIfInstalled(this.dashboardClient, deployment),
         },
-        { gridActions: deploymentGridActions(deployment) }
+        { gridActions: deploymentGridActions(params.clientID, deployment) }
       );
       table.push(row);
     });
@@ -140,7 +140,7 @@ function checkIfInstalled(
     const deployments = client.List({
       apiVersion: "apps/v1",
       kind: "Deployment",
-      namespace: "code-2020-demo",
+      namespace: "default",
       labelSelector: {
         matchLabels: { app: result.name, "managed-by": "code-2020-plugin" },
       },
@@ -148,7 +148,10 @@ function checkIfInstalled(
     if (deployments.length > 0) {
       const ref = h.refFromObject(deployments[0]);
       const path = client.RefPath(ref);
-      return new LinkFactory({ value: ref.name, ref: path });
+      return new TextFactory({
+        value: `[${ref.name}](/#/${path})`,
+        options: { isMarkdown: true },
+      });
     } else {
       return new TextFactory({ value: "Not installed." });
     }
@@ -158,7 +161,7 @@ function checkIfInstalled(
   }
 }
 
-function deploymentGridActions(obj: any): GridActionsFactory {
+function deploymentGridActions(clientID: string, obj: any): GridActionsFactory {
   return new GridActionsFactory({
     actions: [
       {
@@ -166,8 +169,22 @@ function deploymentGridActions(obj: any): GridActionsFactory {
         actionPath: "action.codeconnect2020.dev/installDeployment",
         payload: {
           name: obj.name,
+          clientID: clientID,
         },
         type: "primary",
+      },
+      {
+        name: "Delete",
+        actionPath: "action.codeconnect2020.dev/deleteDeployment",
+        payload: {
+          name: obj.name,
+          clientID: clientID,
+        },
+        confirmation: {
+          title: `Delete ${obj.name}`,
+          body: `Are you sure you want to delete ${obj.title}?`,
+        },
+        type: "danger",
       },
     ],
   });

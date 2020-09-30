@@ -49,6 +49,7 @@ const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
     actionNames: [
       "action.octant.dev/setNamespace",
       "action.codeconnect2020.dev/installDeployment",
+      "action.codeconnect2020.dev/deleteDeployment",
     ],
   };
 
@@ -100,10 +101,8 @@ const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
         (result: any) => {
           this.currentNamespace.subscribe((ns: string) => {
             const resp = this.dashboardClient.Update(ns, result.data);
-            console.log(ns);
-            console.log(resp);
             this.dashboardClient.SendEvent(
-              request.clientID,
+              request.payload.clientID,
               "event.octant.dev/alert",
               { type: "SUCCESS", message: resp, expiration: 10 }
             );
@@ -111,7 +110,44 @@ const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
         }
       );
     }
-    return;
+    if (request.actionName == "action.codeconnect2020.dev/deleteDeployment") {
+      this.currentNamespace.subscribe((ns: string) => {
+        const deploymentKey = {
+          namespace: ns,
+          name: request.payload.name,
+          apiVersion: "apps/v1",
+          kind: "Deployment",
+        };
+        const serviceKey = {
+          namespace: ns,
+          name: request.payload.name,
+          apiVersion: "v1",
+          kind: "Service",
+        };
+
+        try {
+          this.dashboardClient.Delete(deploymentKey);
+        } catch (e) {
+          console.log(e);
+        }
+
+        try {
+          this.dashboardClient.Delete(serviceKey);
+        } catch (e) {
+          console.log(e);
+        }
+
+        this.dashboardClient.SendEvent(
+          request.payload.clientID,
+          "event.octant.dev/alert",
+          {
+            type: "SUCCESS",
+            message: `Deleted ${request.payload.name}`,
+            expiration: 10,
+          }
+        );
+      });
+    }
   }
 
   tabHandler(request: octant.ObjectRequest): octant.TabResponse {
