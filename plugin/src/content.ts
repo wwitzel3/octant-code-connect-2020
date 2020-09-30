@@ -15,10 +15,10 @@ const DEPLOYMENT_COLUMNS = ["Name", "Title", "Filename", "Deployment"];
  * @param params router params and properties of octant.ContentRequest
  */
 export function getHandler(this: any, params: any): octant.ContentResponse {
-  const name: string = params.entityName;
+  const name: string = params.deploymentName;
   const title = [
     new TextFactory({ value: "Code Connect 2020" }),
-    new TextFactory({ value: "Entities" }),
+    new TextFactory({ value: "Deployments" }),
     new TextFactory({ value: name }),
   ];
 

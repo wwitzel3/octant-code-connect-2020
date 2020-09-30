@@ -8,7 +8,7 @@ export const router = new RouteRecognizer();
 router.add(
   [
     {
-      path: "/entities",
+      path: "/deployments",
       handler: listHandler,
     },
   ],
@@ -16,7 +16,7 @@ router.add(
 );
 router.add([
   {
-    path: "/entities/:entityName",
+    path: "/deployments/:deploymentName",
     handler: getHandler,
   },
 ]);

@@ -131,7 +131,7 @@ const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
       "code-connect-2020",
       "cloud"
     );
-    nav.add("Entities", "entities");
+    nav.add("Deployments", "deployments");
     return nav;
   }
 
