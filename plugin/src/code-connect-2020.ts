@@ -70,7 +70,6 @@ const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
   printHandler(request: octant.ObjectRequest): octant.PrintResponse {
     const metadata = request.object.metadata as V1ObjectMeta;
     if (metadata.labels) {
-      console.log(JSON.stringify(metadata.labels));
       if (metadata.labels["managed-by"] === "code-2020-plugin") {
         const config = new SummaryFactory({
           sections: [
@@ -95,7 +94,6 @@ const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
       return;
     }
     if (request.actionName === "action.codeconnect2020.dev/installDeployment") {
-      console.log("calling action");
       this.httpClient.getJSON(
         "http://localhost:4200/deployments/" + request.payload.name,
         (result: any) => {

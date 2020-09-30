@@ -8,6 +8,9 @@ import { EditorFactory } from "@project-octant/plugin/components/editor";
 
 import { FlexLayoutFactory } from "@project-octant/plugin/components/flexlayout";
 import { GridActionsFactory } from "@project-octant/plugin/components/grid-actions";
+import { V1Deployment, V1Service } from "@kubernetes/client-node";
+import { SummaryFactory } from "@project-octant/plugin/components/summary";
+import { ComponentFactory } from "@project-octant/plugin/components/component-factory";
 
 const PREFIX = "/code-connect-2020";
 const DEPLOYMENT_COLUMNS = ["Name", "Title", "Filename", "Deployment"];
@@ -26,6 +29,8 @@ export function getHandler(this: any, params: any): octant.ContentResponse {
   ];
 
   const httpClient = this.httpClient as octant.HTTPClient;
+  const dashboardClient = this.dashboardClient as octant.DashboardClient;
+
   let deployment: any;
 
   httpClient.getJSON(
@@ -35,25 +40,67 @@ export function getHandler(this: any, params: any): octant.ContentResponse {
     }
   );
 
+  const internalSummary = new SummaryFactory({
+    sections: [
+      {
+        header: "Name",
+        content: new TextFactory({ value: deployment.name }).toComponent(),
+      },
+      {
+        header: "Title",
+        content: new TextFactory({ value: deployment.title }).toComponent(),
+      },
+    ],
+  });
+
   let entityDetails = new CardFactory({
-    body: new TextFactory({
-      value: "Information from a 3rd party API using httpClient for " + name,
-    }).toComponent(),
+    body: internalSummary.toComponent(),
     factoryMetadata: {
-      title: [new TextFactory({ value: `${name} - Details I` }).toComponent()],
+      title: [new TextFactory({ value: `${name} - Internal` }).toComponent()],
     },
   }).toComponent();
 
+  let k8sSummary: ComponentFactory<any>;
+
+  try {
+    const k8sDeployment = dashboardClient.Get({
+      apiVersion: "apps/v1",
+      kind: "Deployment",
+      namespace: "default",
+      name: deployment.name,
+    }) as V1Deployment;
+
+    const k8sService = dashboardClient.Get({
+      apiVersion: "v1",
+      kind: "Service",
+      namespace: "default",
+      name: deployment.name,
+    }) as V1Service;
+
+    k8sSummary = new SummaryFactory({
+      sections: [
+        {
+          header: "Deployment",
+          content: h.genLinkFromObject(k8sDeployment, dashboardClient),
+        },
+        {
+          header: "Service",
+          content: h.genLinkFromObject(k8sService, dashboardClient),
+        },
+      ],
+    });
+  } catch (e) {
+    k8sSummary = new TextFactory({value: "Not installed."})
+  }
+
   let apiDetails = new CardFactory({
-    body: new TextFactory({
-      value:
-        "Information from the Kubernetes API using dashboardClient for " + name,
-    }).toComponent(),
+    body: k8sSummary.toComponent(),
     factoryMetadata: {
       title: [
-        new TextFactory({ value: ` ${name} - Details II` }).toComponent(),
+        new TextFactory({ value: ` ${name} - Kubernetes` }).toComponent(),
       ],
     },
+    options: {}
   }).toComponent();
 
   let layout = new FlexLayoutFactory({
@@ -111,6 +158,8 @@ export function listHandler(this: any, params: any): octant.ContentResponse {
         },
         { gridActions: deploymentGridActions(params.clientID, deployment) }
       );
+      // if (metadata?.deletionTimestamp)
+      // isDeleting = true
       table.push(row);
     });
   });
@@ -156,7 +205,6 @@ function checkIfInstalled(
       return new TextFactory({ value: "Not installed." });
     }
   } catch (e) {
-    console.log(e);
     return new TextFactory({ value: "Error Getting Status" });
   }
 }
