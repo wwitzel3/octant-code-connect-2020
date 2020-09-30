@@ -7,7 +7,7 @@ var app = express();
 var deployments = [
     {name: "simpleapp", title: "K8S Bootcamp", filename: "yaml/simpleapp.yaml" },
     {name: "httpbin", title: "HTTPBIN Tool", filename: "yaml/httpbin.yaml" },
-    {name: "hellonode", title: "Hello Node", filename: "yaml/hello-node.yaml" },
+    {name: "hello-node", title: "Hello Node", filename: "yaml/hello-node.yaml" },
 ];
 
 app.use(cors());

@@ -7,6 +7,7 @@ import { CardFactory } from "@project-octant/plugin/components/card";
 import { EditorFactory } from "@project-octant/plugin/components/editor";
 
 import { FlexLayoutFactory } from "@project-octant/plugin/components/flexlayout";
+import { GridActionsFactory } from "@project-octant/plugin/components/grid-actions";
 
 const PREFIX = "/code-connect-2020";
 const DEPLOYMENT_COLUMNS = ["Name", "Title", "Filename", "Deployment"];
@@ -98,15 +99,18 @@ export function listHandler(this: any, params: any): octant.ContentResponse {
 
   httpClient.getJSON("http://localhost:4200/deployments", (results: any) => {
     results.forEach((deployment: any) => {
-      const row = new h.TableRow({
-        Name: new LinkFactory({
-          value: deployment.name,
-          ref: `${PREFIX}/deployments/${deployment.name}`,
-        }),
-        Title: new TextFactory({ value: deployment.title }),
-        Filename: new TextFactory({ value: deployment.filename }),
-        Deployment: new TextFactory({ value: "Not installed" }),
-      });
+      const row = new h.TableRow(
+        {
+          Name: new LinkFactory({
+            value: deployment.name,
+            ref: `${PREFIX}/deployments/${deployment.name}`,
+          }),
+          Title: new TextFactory({ value: deployment.title }),
+          Filename: new TextFactory({ value: deployment.filename }),
+        Deployment: new TextFactory({ value: "Not installed." }),
+        },
+        { gridActions: deploymentGridActions(deployment) }
+      );
       table.push(row);
     });
   });
@@ -126,4 +130,19 @@ export function notFoundHandler(this: any, param: any): octant.ContentResponse {
   ];
   const text = new TextFactory({ value: "Not Found." });
   return h.createContentResponse(title, [text]);
+}
+
+function deploymentGridActions(obj: any): GridActionsFactory {
+  return new GridActionsFactory({
+    actions: [
+      {
+        name: "Install",
+        actionPath: "action.codeconnect2020.dev/installDeployment",
+        payload: {
+          name: obj.name,
+        },
+        type: "primary",
+      },
+    ],
+  });
 }

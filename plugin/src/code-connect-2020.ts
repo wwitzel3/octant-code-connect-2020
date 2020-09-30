@@ -43,7 +43,10 @@ const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
   capabilities = {
     supportPrinterConfig: [podGVK],
     supportTab: [podGVK],
-    actionNames: ["action.octant.dev/setNamespace"],
+    actionNames: [
+      "action.octant.dev/setNamespace",
+      "action.codeconnect2020.dev/installDeployment",
+    ],
   };
 
   // We want to keep track of the current selected namespace
@@ -92,6 +95,24 @@ const CodeConnect2020: octant.PluginConstructor = class CodeConnect2020
     if (request.actionName === "action.octant.dev/setNamespace") {
       this.currentNamespace.next(request.payload.namespace);
       return;
+    }
+    if (request.actionName === "action.codeconnect2020.dev/installDeployment") {
+      console.log("calling action");
+      this.httpClient.getJSON(
+        "http://localhost:4200/deployments/" + request.payload.name,
+        (result: any) => {
+          this.currentNamespace.subscribe((ns: string) => {
+            const resp = this.dashboardClient.Update(ns, result.data);
+            console.log(ns);
+            console.log(resp);
+            this.dashboardClient.SendEvent(
+              request.clientID,
+              "event.octant.dev/alert",
+              { type: "SUCCESS", message: resp, expiration: 10 }
+            );
+          });
+        }
+      );
     }
     return;
   }
